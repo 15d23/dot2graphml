@@ -35,31 +35,51 @@ graphXml dot =
   in mkqelem g [sattr "xmlns" graphml, sattr "xmlns:y" yed,
                 sattr "xmlns:xsi" "http://www.w3.org/2001/XMLSchema-instance",
                 sattr "xsi:schemaLocation" "http://graphml.graphdrawing.org/xmlns/graphml http://www.yworks.com/xml/schema/graphml/1.0/ygraphml.xsd"] $
-       [mkelem "key" [sattr "for" "node",
-                      sattr "id" "d0",
-                      sattr "yfiles.type" "nodegraphics"] [],
-        mkelem "key" [sattr "for" "node",
+       [
+        mkelem "key" [sattr "attr.name" "Description",
+                      sattr "attr.type" "string",
+                      sattr "for" "graph",
+                      sattr "id" "d0"] [],
+        mkelem "key" [sattr "for" "port",
                       sattr "id" "d1",
-                      sattr "name" "description",
-                      sattr "attr.type" "string"] [],
-        mkelem "key" [sattr "for" "edge",
+                      sattr "yfiles.type" "portgraphics"] [],
+        mkelem "key" [sattr "for" "port",
                       sattr "id" "d2",
-                      sattr "yfiles.type" "nodegraphics"] [],
-        mkelem "key" [sattr "for" "edge",
+                      sattr "yfiles.type" "portgeometry"] [],
+        mkelem "key" [sattr "for" "port",
                       sattr "id" "d3",
-                      sattr "name" "description",
-                      sattr "attr.type" "string"] [],
-        mkelem "key" [sattr "for" "graphml",
-                      sattr "id" "d4",
-                      sattr "yfiles.type" "resources"] [],
+                      sattr "yfiles.type" "portuserdata"] [],
+        mkelem "key" [sattr "attr.name" "url",
+                      sattr "attr.type" "string",
+                      sattr "for" "node",
+                      sattr "id" "d4"] [],
+        mkelem "key" [sattr "attr.name" "description",
+                      sattr "attr.type" "string",
+                      sattr "for" "node",
+                      sattr "id" "d5"] [],
         mkelem "key" [sattr "for" "node",
                       sattr "id" "d6",
                       sattr "yfiles.type" "nodegraphics"] [],
+        mkelem "key" [sattr "for" "graphml",
+                      sattr "id" "d7",
+                      sattr "yfiles.type" "resources"] [],
+        mkelem "key" [sattr "attr.name" "url",
+                      sattr "attr.type" "string",
+                      sattr "for" "edge",
+                      sattr "id" "d8"] [],
+        mkelem "key" [sattr "attr.name" "description",
+                      sattr "attr.type" "string",
+                      sattr "for" "edge",
+                      sattr "id" "d9"] [],
+        mkelem "key" [sattr "for" "edge",
+                      sattr "id" "d10",
+                      sattr "yfiles.type" "edgegraphics"] [],
+
         mkelem "graph" ([sattr "edgedefault" "directed",
                          sattr "parse.order" "free",
                          sattr "parse.edges" (show $ nEdges fullGraph),
                          sattr "parse.nodes" (show $ nNodes fullGraph)] ++ idAttr (G.graphID dot)) (run defcolor fullGraph),
-        mkelem "data" [sattr "key" "d4"] [
+        mkelem "data" [sattr "key" "d7"] [
           mkqelem (mkQName "y" "Resources" "") [] [] ]
         ]
 
@@ -113,7 +133,7 @@ run baseClr sts = concat $ seqmap fromRoot sts
     fromRoot (G.DE (G.DotEdge from to _)) = [mkelem "edge" [sattr "source" from,
                                                             sattr "target" to,
                                                             sattr "id" (from ++ to) ] [] ]
-    fromRoot (G.DN (G.DotNode nid attrs)) = [mkelem "node" [sattr "id" nid] [ynode (getLabel attrs) (Just defcolor)] ]
+    fromRoot (G.DN (G.DotNode nid attrs)) = [mkelem "node" [sattr "id" nid] [ynode (nid) (getLabel attrs) (Just defcolor)] ]
     fromRoot x = [cmt (show x)]
 
     go :: ArrowXml a => G.DotStatement String -> a XmlTree XmlTree
@@ -122,7 +142,7 @@ run baseClr sts = concat $ seqmap fromRoot sts
         ygroup (getLabel $ graphAttrs subgraph) (getColor $ graphAttrs subgraph),
         mkelem "graph" (idAttr' ":g" gid) (seqmap go subgraph) ]
     go (G.DN (G.DotNode nid attrs)) =
-        mkelem "node" [sattr "id" nid] [ynode (getLabel attrs) (getColor attrs),
+        mkelem "node" [sattr "id" nid] [ynode (nid) (getLabel attrs) (getColor attrs),
                                         mkelem "data" [sattr "key" "d1"] [] ]
     go (G.DE (G.DotEdge from to _)) =
         mkelem "edge" [sattr "source" from,
@@ -148,8 +168,8 @@ run baseClr sts = concat $ seqmap fromRoot sts
     clrAttr Nothing = sattr "color" defcolor
     clrAttr (Just clr) = sattr "color" clr
 
-    ynode label color =
-      mkelem "data" [sattr "key" "d0"] [
+    ynode nid label color =
+      mkelem "data" [sattr "key" "d6"] [
         mkqelem shapeNode [] [
           mkqelem geometry [sattr "height" "30.0", sattr "width" "30.0", sattr "x" "0.0", sattr "y" "0.0"] [],
           mkqelem fill [clrAttr color, sattr "transparent" "false"] [],
@@ -159,7 +179,8 @@ run baseClr sts = concat $ seqmap fromRoot sts
                              sattr "autoSizePolicy" "content",
                              sattr "hasBackgroundColor" "false",
                              sattr "modelName" "internal",
-                             sattr "modelPosition" "c" ] [txt label] ] ]
+                             sattr "modelPosition" "c" ] [txt nid] ] ]
+                             -- sattr "modelPosition" "c" ] [txt label] ] ]
     
     ygroup label color =
       let lbl = mkqelem nodeLabel [sattr "height" "25.0",
