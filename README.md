@@ -19,4 +19,4 @@ ghc --make ./dot2graphml.hs
 
 > Note:
 >
-> This app can't change 
+> The dot file can't use subgraph cluster_XXX , I can't Fix this Problem
